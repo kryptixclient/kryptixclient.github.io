@@ -78,6 +78,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 .g4 div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px}
 .g4 small{display:block;color:var(--mute);font-size:13px}
 @media(max-width:720px){.dash{grid-template-columns:1fr}}
+.lc svg{width:34px;height:34px;display:block;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -172,7 +173,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
     <div class="pn top"><div><h3 style="margin:0">Kryptix+ - Latest</h3><small style="color:var(--mute)" id="ls">Redeem a license key to unlock your download</small></div>
      <button class="btn" id="dbtn" disabled onclick="dl()">Download</button></div>
     <div class="pn"><h3>Quick Start</h3><div class="g4"><div><b>Download</b><small>Grab the latest .jar above</small></div><div><b>Install</b><small>Drop it in your 1.21.11 mods folder</small></div><div><b>Play</b><small>Launch and press Right Shift</small></div></div></div>
-    <div class="pn"><h3>Compatible Launchers</h3><div class="g4"><div><b>Minecraft Launcher</b><small>Official</small></div><div><b>Modrinth App</b><small>Compatible</small></div><div><b>Prism Launcher</b><small>Compatible</small></div><div><b>Zalith (Android)</b><small>Compatible</small></div></div></div>
+    <div class="pn"><h3>Compatible Launchers</h3><div class="g4"><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 4l14 8v16l-14 8-14-8V12z" fill="#6b4a2b"/><path d="M20 4l14 8-14 8-14-8z" fill="#5fae3b"/><path d="M20 20v16l-14-8V12z" fill="#7d5733"/></svg><b>Minecraft Launcher</b><small>Official</small></div><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 6a14 14 0 1 0 14 14" stroke="#1bd96a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="20" cy="20" r="4" fill="#1bd96a"/></svg><b>Modrinth App</b><small>Compatible</small></div><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 5l15 28H5z" fill="none" stroke="#9b6bff" stroke-width="3" stroke-linejoin="round"/><path d="M20 5l15 28H20z" fill="#9b6bff" opacity=".6"/></svg><b>Prism Launcher</b><small>Compatible</small></div><div class="lc"><svg viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="8" fill="#e01b1b"/><path d="M12 13h16L12 27h16" stroke="#fff" stroke-width="3.5" fill="none" stroke-linejoin="round"/></svg><b>Zalith (Android)</b><small>Compatible</small></div></div></div>
     <div class="pn"><h3>System Requirements</h3><div class="g4"><div><small>Version</small><b>1.21.11</b></div><div><small>Mod loader</small><b>Fabric</b></div><div><small>Required</small><b>Fabric API</b></div><div><small>Platforms</small><b>Windows, macOS, Linux, Android</b></div></div></div>
    </div>
    <div id="t-key" class="tab" hidden><div class="pn"><h3>Redeem Key</h3>
@@ -206,7 +207,7 @@ async function submitAuth(){const e=$('e').value.trim(),p=$('p').value,m=$('am')
 async function refresh(){if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(!session){$('navbtn').textContent='Login';return}
  const md=session.user.user_metadata||{};$('dn').textContent=md.discord||md.username||'User';$('navbtn').textContent='Dashboard';
  const{data}=await sb.rpc('has_license');ok=data===true;$('dbtn').disabled=!ok;
- $('ls').textContent=ok?'Latest version · .jar':'Redeem a license key to unlock your download';view('dash')}
+ $('ls').textContent='Latest version · .jar';document.querySelectorAll('.nv[data-t]').forEach(a=>a.hidden=!ok&&a.dataset.t!='t-key');tab(ok?'t-dl':'t-key');view('dash')}
 async function redeem(){const m=$('km');m.textContent='...';const{data,error}=await sb.rpc('redeem_key',{k:$('k').value});
  if(error||!data){m.textContent='Invalid or already used key';return}
  m.textContent='Key accepted!';await refresh();tab('t-dl')}
