@@ -79,6 +79,15 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 .g4 small{display:block;color:var(--mute);font-size:13px}
 @media(max-width:720px){.dash{grid-template-columns:1fr}}
 .lc svg{width:34px;height:34px;display:block;margin-bottom:10px}
+.gate{max-width:600px;margin:40px auto;padding:0 20px}
+.gh{display:flex;align-items:center;justify-content:space-between}
+.gt{display:flex;align-items:center;gap:12px}.gt img{height:34px;width:auto}.gt h1{font-size:26px}
+.out{color:var(--mute);cursor:pointer;font-size:14px}.out:hover{color:var(--text)}
+.gc{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:36px 24px;text-align:center;margin-top:24px}
+.ki{width:64px;height:64px;border-radius:14px;background:#2a1717;display:grid;place-items:center;margin:0 auto 16px;color:var(--acc2)}
+.gc p{color:var(--mute);font-size:15px}
+.gr{display:flex;gap:10px;margin-top:20px}.gr input{margin:0;flex:1;min-width:0}
+.gc a.pl{display:inline-block;margin-top:18px;color:var(--mute);font-size:13px}.gc a.pl:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -159,6 +168,17 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
   <button class="btn" style="width:100%" id="ab" onclick="submitAuth()">Login</button>
   <div class="sw" id="sw" onclick="mode(!reg)"></div>
 </div></div>
+<div id="gate" hidden class="gate">
+  <div class="gh"><div class="gt"><img id="gl" alt=""><h1>Dashboard</h1></div><a class="out" onclick="logout()">Log out</a></div>
+  <div class="gc">
+    <div class="ki"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M17 6l3 3M14 9l2 2"/></svg></div>
+    <h2 style="margin-bottom:6px">Redeem License</h2>
+    <p>Enter your license key to activate Kryptix</p>
+    <div class="gr"><input id="gk" placeholder="KX-XXXXXXXXXXXXXXXX" autocapitalize="characters"><button class="btn" onclick="redeem('gk','gm')">Redeem</button></div>
+    <div class="msg" id="gm"></div>
+    <a class="pl" id="gbuy" href="#" target="_blank" rel="noopener">Don't have a key? Purchase Kryptix</a>
+  </div>
+</div>
 <div id="dash" hidden class="dash">
   <aside>
     <div class="me"><img id="dl" alt=""><div><b id="dn"></b><small>Discord</small></div></div>
@@ -193,7 +213,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 const SB_URL='https://gnmmlhczlpilpqiuqrqx.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubW1saGN6bHBpbHBxaXVxcnF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNzEyMTAsImV4cCI6MjEwNzc0NzIxMH0.grGSIk2q2FaV0X7lehFNr9gBn1hYk70NiFieo2xz4ns', FILE='Kryptix.jar';
 const $=i=>document.getElementById(i);let sb;try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 let reg=false,ok=false;
-const view=v=>{['home','auth','dash'].forEach(x=>$(x).hidden=x!=v);scrollTo(0,0)};
+const view=v=>{['home','auth','gate','dash'].forEach(x=>$(x).hidden=x!=v);scrollTo(0,0)};
 function mode(r){reg=r;document.querySelectorAll('.r').forEach(e=>e.hidden=!r);$('at').textContent=$('ab').textContent=r?'Register':'Login';$('sw').textContent=r?'Have an account? Login':'No account? Register';$('am').textContent='';$('p').autocomplete=r?'new-password':'current-password'}
 async function go(){if(!sb){alert('Add your Supabase URL and key in index.html first');return}const{data:{session}}=await sb.auth.getSession();if(session)return refresh();mode(false);view('auth')}
 async function diag(){const o=[];for(const[n,u,h]of[['Supabase',SB_URL+'/auth/v1/health',{apikey:SB_KEY}],['CDN','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/package.json',{}]]){try{const r=await fetch(u,{headers:h});o.push(n+' '+r.status)}catch(e){o.push(n+' '+e.name+': '+e.message)}}return o.join(' | ')}
@@ -207,8 +227,8 @@ async function submitAuth(){const e=$('e').value.trim(),p=$('p').value,m=$('am')
 async function refresh(){if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(!session){$('navbtn').textContent='Login';return}
  const md=session.user.user_metadata||{};$('dn').textContent=md.discord||md.username||'User';$('navbtn').textContent='Dashboard';
  const{data}=await sb.rpc('has_license');ok=data===true;$('dbtn').disabled=!ok;
- $('ls').textContent='Latest version · .jar';document.querySelectorAll('.nv[data-t]').forEach(a=>a.hidden=!ok&&a.dataset.t!='t-key');tab(ok?'t-dl':'t-key');view('dash')}
-async function redeem(){const m=$('km');m.textContent='...';const{data,error}=await sb.rpc('redeem_key',{k:$('k').value});
+ $('ls').textContent='Latest version · .jar';if(ok)tab('t-dl');view(ok?'dash':'gate')}
+async function redeem(i,mm){const m=$(mm||'km');m.textContent='...';const{data,error}=await sb.rpc('redeem_key',{k:$(i||'k').value});
  if(error||!data){m.textContent='Invalid or already used key';return}
  m.textContent='Key accepted!';await refresh();tab('t-dl')}
 async function dl(){const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{},n=(md.discord||md.username||'user').replace(/[^A-Za-z0-9._-]/g,'');const{data,error}=await sb.storage.from('client').createSignedUrl(FILE,60,{download:'KryptixPlus-'+n+'.jar'});
@@ -216,7 +236,7 @@ async function dl(){const{data:{session}}=await sb.auth.getSession(),md=session.
 async function logout(){await sb.auth.signOut();ok=false;$('navbtn').textContent='Login';view('home')}
 function tab(t){document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!=t);document.querySelectorAll('.nv[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==t))}
 document.querySelectorAll('.nv[data-t]').forEach(a=>a.onclick=()=>tab(a.dataset.t));
-$('dl').src=document.querySelector('.logo img').src;$('kbuy').href=$('buy').href;
+$('dl').src=document.querySelector('.logo img').src;$('kbuy').href=$('buy').href;$('gl').src=$('dl').src;$('gbuy').href=$('buy').href;
 mode(false);refresh();
 </script>
 <footer><div class="wrap">
