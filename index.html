@@ -88,6 +88,11 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 .gc p{color:var(--mute);font-size:15px}
 .gr{display:flex;gap:10px;margin-top:20px}.gr input{margin:0;flex:1;min-width:0}
 .gc a.pl{display:inline-block;margin-top:18px;color:var(--mute);font-size:13px}.gc a.pl:hover{color:var(--text)}
+.m{margin-bottom:14px}.m small{color:var(--mute);margin-left:8px;font-size:12px}.m div{word-break:break-word}
+.m img{max-width:min(260px,100%);border-radius:10px;display:block;margin-top:6px}
+.cin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);align-items:center}
+.cin input[type=text]{margin:0;flex:1;min-width:0}
+.att{background:var(--bg);border:1px solid var(--line);border-radius:8px;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;font-size:20px;flex:none}
 </style>
 </head>
 <body>
@@ -183,7 +188,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
   <aside>
     <div class="me"><img id="dl" alt=""><div><b id="dn"></b><small>Discord</small></div></div>
     <a class="nv on" data-t="t-dl">Download</a>
-    <a class="nv" data-t="t-key">Redeem Key</a>
+    <a class="nv" data-t="t-chat">Chat</a>
     <a class="nv" data-t="t-faq">FAQ</a>
     <a class="nv" data-t="t-upd">Updates</a>
     <a class="nv" onclick="logout()">Log out</a>
@@ -196,10 +201,10 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
     <div class="pn"><h3>Compatible Launchers</h3><div class="g4"><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 4l14 8v16l-14 8-14-8V12z" fill="#6b4a2b"/><path d="M20 4l14 8-14 8-14-8z" fill="#5fae3b"/><path d="M20 20v16l-14-8V12z" fill="#7d5733"/></svg><b>Minecraft Launcher</b><small>Official</small></div><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 6a14 14 0 1 0 14 14" stroke="#1bd96a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="20" cy="20" r="4" fill="#1bd96a"/></svg><b>Modrinth App</b><small>Compatible</small></div><div class="lc"><svg viewBox="0 0 40 40"><path d="M20 5l15 28H5z" fill="none" stroke="#9b6bff" stroke-width="3" stroke-linejoin="round"/><path d="M20 5l15 28H20z" fill="#9b6bff" opacity=".6"/></svg><b>Prism Launcher</b><small>Compatible</small></div><div class="lc"><svg viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="8" fill="#e01b1b"/><path d="M12 13h16L12 27h16" stroke="#fff" stroke-width="3.5" fill="none" stroke-linejoin="round"/></svg><b>Zalith (Android)</b><small>Compatible</small></div></div></div>
     <div class="pn"><h3>System Requirements</h3><div class="g4"><div><small>Version</small><b>1.21.11</b></div><div><small>Mod loader</small><b>Fabric</b></div><div><small>Required</small><b>Fabric API</b></div><div><small>Platforms</small><b>Windows, macOS, Linux, Android</b></div></div></div>
    </div>
-   <div id="t-key" class="tab" hidden><div class="pn"><h3>Redeem Key</h3>
-    <input id="k" placeholder="KX-XXXXXXXXXXXXXXXX"><div class="msg" id="km"></div>
-    <button class="btn" onclick="redeem()">Redeem</button>
-    <p class="sub" style="margin:16px 0 0">No key? <a id="kbuy" href="#" target="_blank" rel="noopener" style="color:var(--acc2)">Purchase one</a></p></div></div>
+   <div id="t-chat" class="tab" hidden><div class="pn" style="padding:0;display:flex;flex-direction:column;height:70vh">
+    <div id="msgs" style="flex:1;overflow:auto;padding:16px"></div>
+    <div class="cin"><label class="att" id="al">+<input id="cf" type="file" accept="image/*" hidden onchange="$('al').firstChild.nodeValue='✓'"></label><input id="ci" type="text" placeholder="Message" maxlength="1000"><button class="btn" onclick="send()">Send</button></div>
+   </div></div>
    <div id="t-faq" class="tab" hidden>
     <details><summary>How do I get my key?</summary><p>Purchase Kryptix+ and your key is delivered to your email</p></details>
     <details><summary>Can I use one key on two accounts?</summary><p>No, a key unlocks the download for one account</p></details>
@@ -217,27 +222,43 @@ const view=v=>{['home','auth','gate','dash'].forEach(x=>$(x).hidden=x!=v);scroll
 function mode(r){reg=r;document.querySelectorAll('.r').forEach(e=>e.hidden=!r);$('at').textContent=$('ab').textContent=r?'Register':'Login';$('sw').textContent=r?'Have an account? Login':'No account? Register';$('am').textContent='';$('p').autocomplete=r?'new-password':'current-password'}
 async function go(){if(!sb){alert('Add your Supabase URL and key in index.html first');return}const{data:{session}}=await sb.auth.getSession();if(session)return refresh();mode(false);view('auth')}
 async function diag(){const o=[];for(const[n,u,h]of[['Supabase',SB_URL+'/auth/v1/health',{apikey:SB_KEY}],['CDN','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/package.json',{}]]){try{const r=await fetch(u,{headers:h});o.push(n+' '+r.status)}catch(e){o.push(n+' '+e.name+': '+e.message)}}return o.join(' | ')}
+async function gate(body){const{data,error}=await sb.functions.invoke('gate',{body});if(error){let m=error.message;try{m=(await error.context.json()).error||m}catch(_){}throw new Error(m)}return data}
 async function submitAuth(){const e=$('e').value.trim(),p=$('p').value,m=$('am');m.textContent='...';
- let r;if(reg){const u=$('u').value.trim(),d=$('d').value.trim();if(!u||!d){m.textContent='Enter username and Discord username';return}
-  r=await sb.auth.signUp({email:e,password:p,options:{data:{username:u,discord:d}}})}
- else r=await sb.auth.signInWithPassword({email:e,password:p});
- if(r.error){m.textContent=r.error.message;if(/fetch|network/i.test(r.error.message))m.textContent+=' [TEST] '+await diag();return}
- if(!r.data.session){m.textContent='Account created, confirm your email then log in';mode(false);return}
- refresh()}
-async function refresh(){if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(!session){$('navbtn').textContent='Login';return}
+ try{let dev=crypto.randomUUID();try{dev=localStorage.kx||(localStorage.kx=dev)}catch(_){}
+  if(reg){const u=$('u').value.trim(),d=$('d').value.trim();if(!u||!d){m.textContent='Enter username and Discord username';return}
+   await gate({action:'register',email:e,password:p,username:u,discord:d,device:dev})}
+  const r=await gate({action:'login',email:e,password:p,device:dev});
+  const{error}=await sb.auth.setSession({access_token:r.access_token,refresh_token:r.refresh_token});if(error)throw error;
+  m.textContent='';refresh()}catch(x){m.textContent=x.message}}
+async function refresh(v){if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(!session){$('navbtn').textContent='Login';return}
  const md=session.user.user_metadata||{};$('dn').textContent=md.discord||md.username||'User';$('navbtn').textContent='Dashboard';
  const{data}=await sb.rpc('has_license');ok=data===true;$('dbtn').disabled=!ok;
- $('ls').textContent='Latest version · .jar';if(ok)tab('t-dl');view(ok?'dash':'gate')}
+ $('ls').textContent='Latest version · .jar';if(ok)tab('t-dl');if(v!==false)view(ok?'dash':'gate')}
 async function redeem(i,mm){const m=$(mm||'km');m.textContent='...';const{data,error}=await sb.rpc('redeem_key',{k:$(i||'k').value});
  if(error||!data){m.textContent='Invalid or already used key';return}
  m.textContent='Key accepted!';await refresh();tab('t-dl')}
 async function dl(){const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{},n=(md.discord||md.username||'user').replace(/[^A-Za-z0-9._-]/g,'');const{data,error}=await sb.storage.from('client').createSignedUrl(FILE,60,{download:'KryptixPlus-'+n+'.jar'});
  if(error){alert('Download unavailable: '+error.message);return}location.href=data.signedUrl}
-async function logout(){await sb.auth.signOut();ok=false;$('navbtn').textContent='Login';view('home')}
-function tab(t){document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!=t);document.querySelectorAll('.nv[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==t))}
+async function logout(){if(ch){sb.removeChannel(ch);ch=null}await sb.auth.signOut();ok=false;$('navbtn').textContent='Login';view('home')}
+let ch=null;
+async function openChat(){if(ch)return;await loadMsgs();ch=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>addMsg(p.new)).subscribe()}
+async function loadMsgs(){const{data}=await sb.from('messages').select('*').order('created_at',{ascending:false}).limit(50);$('msgs').innerHTML='';(data||[]).reverse().forEach(addMsg)}
+async function addMsg(m){const d=document.createElement('div');d.className='m';const b=document.createElement('b'),t=document.createElement('small');b.textContent=m.name||'user';t.textContent=new Date(m.created_at).toLocaleString();d.append(b,t);
+ if(m.body){const p=document.createElement('div');p.textContent=m.body;d.append(p)}
+ $('msgs').append(d);$('msgs').scrollTop=1e9;
+ if(m.image){const{data}=await sb.storage.from('chat').createSignedUrl(m.image,3600);if(data){const i=document.createElement('img');i.src=data.signedUrl;i.onload=()=>{$('msgs').scrollTop=1e9};d.append(i)}}}
+async function send(){const f=$('cf').files[0],x=$('ci').value.trim();if(!x&&!f)return;let path=null;
+ const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{};
+ if(f){if(f.size>5e6||!f.type.startsWith('image/')){alert('Images only, max 5 MB');return}
+  path=session.user.id+'/'+Date.now()+'-'+f.name.replace(/[^A-Za-z0-9._-]/g,'');
+  const u=await sb.storage.from('chat').upload(path,f);if(u.error){alert(u.error.message);return}}
+ const{error}=await sb.from('messages').insert({name:md.discord||md.username,body:x||null,image:path});
+ if(error){alert(error.message);return}$('ci').value='';$('cf').value='';$('al').firstChild.nodeValue='+'}
+$('ci').onkeydown=e=>{if(e.key=='Enter')send()};
+function tab(t){if(t=='t-chat')openChat();document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!=t);document.querySelectorAll('.nv[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==t))}
 document.querySelectorAll('.nv[data-t]').forEach(a=>a.onclick=()=>tab(a.dataset.t));
-$('dl').src=document.querySelector('.logo img').src;$('kbuy').href=$('buy').href;$('gl').src=$('dl').src;$('gbuy').href=$('buy').href;
-mode(false);refresh();
+$('dl').src=document.querySelector('.logo img').src;$('gl').src=$('dl').src;$('gbuy').href=$('buy').href;
+mode(false);refresh(false);
 </script>
 <footer><div class="wrap">
   <div>© 2026 Kryptix Client · All rights reserved</div>
