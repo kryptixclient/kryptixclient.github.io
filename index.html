@@ -222,7 +222,7 @@ const view=v=>{['home','auth','gate','dash'].forEach(x=>$(x).hidden=x!=v);scroll
 function mode(r){reg=r;document.querySelectorAll('.r').forEach(e=>e.hidden=!r);$('at').textContent=$('ab').textContent=r?'Register':'Login';$('sw').textContent=r?'Have an account? Login':'No account? Register';$('am').textContent='';$('p').autocomplete=r?'new-password':'current-password'}
 async function go(){if(!sb){alert('Add your Supabase URL and key in index.html first');return}const{data:{session}}=await sb.auth.getSession();if(session)return refresh();mode(false);view('auth')}
 async function diag(){const o=[];for(const[n,u,h]of[['Supabase',SB_URL+'/auth/v1/health',{apikey:SB_KEY}],['CDN','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/package.json',{}]]){try{const r=await fetch(u,{headers:h});o.push(n+' '+r.status)}catch(e){o.push(n+' '+e.name+': '+e.message)}}return o.join(' | ')}
-async function gate(body){const{data,error}=await sb.functions.invoke('gate',{body});if(error){let m=error.message;try{m=(await error.context.json()).error||m}catch(_){}throw new Error(m)}return data}
+async function gate(body){const{data,error}=await sb.functions.invoke('clever-api',{body});if(error){let m=error.message;try{m=(await error.context.json()).error||m}catch(_){}throw new Error(m)}return data}
 async function submitAuth(){const e=$('e').value.trim(),p=$('p').value,m=$('am');m.textContent='...';
  try{let dev=crypto.randomUUID();try{dev=localStorage.kx||(localStorage.kx=dev)}catch(_){}
   if(reg){const u=$('u').value.trim(),d=$('d').value.trim();if(!u||!d){m.textContent='Enter username and Discord username';return}
