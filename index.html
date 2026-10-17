@@ -234,11 +234,19 @@ async function refresh(v){if(!sb)return;const{data:{session}}=await sb.auth.getS
  const md=session.user.user_metadata||{};$('dn').textContent=md.discord||md.username||'User';$('navbtn').textContent='Dashboard';
  const{data}=await sb.rpc('has_license');ok=data===true;$('dbtn').disabled=!ok;
  $('ls').textContent='Latest version · .jar';if(ok)tab('t-dl');if(v!==false)view(ok?'dash':'gate')}
+async function loadStatus(){const{data}=await sb.rpc('my_status');if(!data||!data.licensed)return;
+ $('hwm').textContent=data.hwid_resets_left+'/3 resets left this month';
+ if(data.download_wait_seconds>0)armCooldown(data.download_wait_seconds)}
+async function doResetHwid(){const{data,error}=await sb.rpc('reset_hwid');$('hwm').textContent=error?error.message:(data.error||('Done - '+data.remaining+'/3 resets left this month'))}
+let cdT;function armCooldown(s){clearInterval(cdT);const b=$('dbtn');const end=Date.now()+s*1000;
+ const tick=()=>{const left=Math.ceil((end-Date.now())/1000);if(left<=0){clearInterval(cdT);b.disabled=false;b.textContent='Download';return}b.disabled=true;b.textContent='Wait '+left+'s';};tick();cdT=setInterval(tick,1000)}
 async function redeem(i,mm){const m=$(mm||'km');m.textContent='...';const{data,error}=await sb.rpc('redeem_key',{k:$(i||'k').value});
  if(error||!data){m.textContent='Invalid or already used key';return}
  m.textContent='Key accepted!';await refresh();tab('t-dl')}
-async function dl(){const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{},n=(md.discord||md.username||'user').replace(/[^A-Za-z0-9._-]/g,'');const{data,error}=await sb.storage.from('client').createSignedUrl(FILE,60,{download:'KryptixPlus-'+n+'.jar'});
- if(error){alert('Download unavailable: '+error.message);return}location.href=data.signedUrl}
+async function dl(){const r=await sb.rpc('request_download');if(r.error){alert('Could not start download');return}
+ if(r.data&&r.data.error=='wait'){armCooldown(r.data.wait_seconds);alert('Please wait '+r.data.wait_seconds+'s between downloads');return}
+ const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{},n=(md.discord||md.username||'user').replace(/[^A-Za-z0-9._-]/g,'');const{data,error}=await sb.storage.from('client').createSignedUrl(FILE,60,{download:'KryptixPlus-'+n+'.jar'});
+ if(error){alert('Download unavailable: '+error.message);return}armCooldown(600);location.href=data.signedUrl}
 async function logout(){if(ch){sb.removeChannel(ch);ch=null}await sb.auth.signOut();ok=false;$('navbtn').textContent='Login';view('home')}
 let ch=null;
 async function openChat(){if(ch)return;await loadMsgs();ch=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>addMsg(p.new)).subscribe()}
