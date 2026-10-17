@@ -220,7 +220,8 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 <script>
 // 1) Paste your Supabase values here (Project Settings > API). The anon key is public by design
 const SB_URL='https://gnmmlhczlpilpqiuqrqx.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubW1saGN6bHBpbHBxaXVxcnF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNzEyMTAsImV4cCI6MjEwNzc0NzIxMH0.grGSIk2q2FaV0X7lehFNr9gBn1hYk70NiFieo2xz4ns', FILE='Kryptix.jar';
-const $=i=>document.getElementById(i);const OWNER_EMAIL='omerfarukmang@gmail.com'; // <-- change if this isn't your login emaillet sb;try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
+const $=i=>document.getElementById(i);const OWNER_EMAIL='omerfarukmang@gmail.com';
+let sb;try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 let reg=false,ok=false;
 const view=v=>{['home','auth','gate','dash'].forEach(x=>$(x).hidden=x!=v);scrollTo(0,0)};
 function mode(r){reg=r;document.querySelectorAll('.r').forEach(e=>e.hidden=!r);$('at').textContent=$('ab').textContent=r?'Register':'Login';$('sw').textContent=r?'Have an account? Login':'No account? Register';$('am').textContent='';$('p').autocomplete=r?'new-password':'current-password'}
