@@ -96,6 +96,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
 .crown{margin-left:6px;vertical-align:-2px}
 .ra{display:flex;flex-direction:column;align-items:flex-end;gap:18px}.ra .out{padding:2px 4px;font-size:13px}
 .del{float:right;color:var(--mute);cursor:pointer;font-size:13px;padding:0 4px}.del:hover{color:#ff5a5a}
+textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:12px;margin-bottom:12px;font:inherit;min-height:84px;resize:vertical}textarea:focus{outline:none;border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -220,7 +221,9 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;pa
     <details><summary>How do I get my key?</summary><p>Purchase Kryptix+ and your key is delivered to your email</p></details>
     <details><summary>Can I use one key on two accounts?</summary><p>No, a key unlocks the download for one account</p></details>
     <details><summary>Does it work on mobile?</summary><p>Not at the moment, Kryptix is built for PC (Windows, macOS and Linux)</p></details></div>
-   <div id="t-upd" class="tab" hidden><div class="pn"><h3>Updates</h3><p class="sub" style="margin:0">v1.0 - Initial release for Minecraft 1.21.11</p></div></div>
+   <div id="t-upd" class="tab" hidden>
+    <div class="pn" id="upost" hidden><h3>Post an update</h3><textarea id="ub" maxlength="2000" placeholder="Write the update"></textarea><button class="btn" onclick="postUpd()">Post</button></div>
+    <div id="ulist"></div></div>
   </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -262,6 +265,16 @@ async function dl(){const r=await sb.rpc('request_download');if(r.error){alert('
  const{data:{session}}=await sb.auth.getSession(),md=session.user.user_metadata||{},n=(md.discord||md.username||'user').replace(/[^A-Za-z0-9._-]/g,'');const{data,error}=await sb.storage.from('client').createSignedUrl(FILE,60,{download:'KryptixPlus-'+n+'.jar'});
  if(error){alert('Download unavailable: '+error.message);return}armCooldown(600);location.href=data.signedUrl}
 async function logout(){if(ch){sb.removeChannel(ch);ch=null}await sb.auth.signOut();ok=false;$('navbtn').textContent='Login';view('home')}
+async function loadUpd(){const{data}=await sb.from('updates').select('*').order('created_at',{ascending:false}).limit(50);const l=$('ulist');l.innerHTML='';
+ const pn=document.createElement('div');pn.className='pn';const h=document.createElement('h3');h.textContent='Updates';pn.append(h);
+ (data||[]).forEach(u=>{const r=document.createElement('div');r.dataset.id=u.id;r.style.marginBottom='16px';
+  if(isOwner){const x=document.createElement('a');x.className='del';x.textContent='\u2715';x.onclick=()=>delUpd(u.id);r.append(x)}
+  const t=document.createElement('small');t.style.color='var(--mute)';t.textContent=new Date(u.created_at).toLocaleDateString();
+  const p=document.createElement('div');p.style.cssText='color:var(--mute);white-space:pre-wrap;word-break:break-word;margin-top:2px';p.textContent=u.body;r.append(t,p);pn.append(r)});
+ if(!data||!data.length){const p=document.createElement('p');p.style.cssText='color:var(--mute);margin:0';p.textContent='No updates yet';pn.append(p)}
+ l.append(pn);$('upost').hidden=!isOwner}
+async function postUpd(){const b=$('ub').value.trim();if(!b)return;const{error}=await sb.from('updates').insert({body:b});if(error){alert(error.message);return}$('ub').value='';loadUpd()}
+async function delUpd(id){if(!confirm('Delete this update?'))return;const{error}=await sb.from('updates').delete().eq('id',id);if(error){alert(error.message);return}loadUpd()}
 async function delMsg(id){if(!confirm('Delete this message?'))return;const{error}=await sb.from('messages').delete().eq('id',id);if(error){alert(error.message);return}const e=document.querySelector('[data-id="'+id+'"]');if(e)e.remove()}
 let ch=null;
 async function openChat(){if(ch)return;await loadMsgs();ch=sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>addMsg(p.new)).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},p=>{const e=document.querySelector('[data-id="'+p.old.id+'"]');if(e)e.remove()}).subscribe()}
@@ -278,7 +291,7 @@ async function send(){const f=$('cf').files[0],x=$('ci').value.trim();if(!x&&!f)
  const{error}=await sb.from('messages').insert({name:md.discord||md.username,body:x||null,image:path});
  if(error){alert(error.message);return}$('ci').value='';$('cf').value='';$('al').firstChild.nodeValue='+'}
 $('ci').onkeydown=e=>{if(e.key=='Enter')send()};
-function tab(t){if(t=='t-chat')openChat();document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!=t);document.querySelectorAll('.nv[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==t))}
+function tab(t){if(t=='t-chat')openChat();if(t=='t-upd')loadUpd();document.querySelectorAll('.tab').forEach(x=>x.hidden=x.id!=t);document.querySelectorAll('.nv[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t==t))}
 document.querySelectorAll('.nv[data-t]').forEach(a=>a.onclick=()=>tab(a.dataset.t));
 $('dl').src=document.querySelector('.logo img').src;$('gl').src=$('dl').src;$('gbuy').href=$('buy').href;
 mode(false);refresh(false);
